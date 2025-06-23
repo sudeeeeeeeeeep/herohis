@@ -58,7 +58,6 @@
                     <p class="text-base sm:text-lg text-white">Collect all 10 cards, take a screenshot of your collection, and send it to us on WhatsApp!</p>
                     <p class="text-xl sm:text-2xl font-bold text-yellow-300 mt-2">+91 7902756966</p>
                     <p class="text-sm sm:text-md text-green-300 mt-3">The lucky winner gets a ₹1000 cash prize!</p>
-                    <p class="text-sm sm:text-md text-red-300 mt-3">NB:If you close your game in between your progress will be lost and should play again to complete the game!!</p>
                 </div>
                 <button id="start-game-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl shadow-lg transition-transform transform hover:scale-105">Start Your Journey</button>
             </div>
@@ -183,7 +182,6 @@
                 const welcomeModal = document.getElementById('welcome-modal');
                 const welcomeBox = document.getElementById('welcome-box');
                 welcomeModal.classList.remove('hidden');
-                // Animate the welcome box for a nice effect
                 setTimeout(() => {
                     welcomeBox.classList.remove('scale-95', 'opacity-0');
                 }, 100);
@@ -213,7 +211,7 @@
              }
         }
 
-        // --- UI RENDERING ---
+        // --- UI RENDERING & EVENT BINDING ---
         function renderQuizUI() {
             const gameContainer = document.getElementById('game-container');
             gameContainer.innerHTML = `
@@ -222,7 +220,7 @@
                         <h1 id="level-title" class="text-xl sm:text-2xl font-bold text-yellow-300 text-center" style="font-family: 'Roboto Slab', serif;"></h1>
                         <div class="flex items-center gap-4">
                             <div class="text-lg font-semibold text-gray-300 text-nowrap">Q: <span id="question-counter">1</span> / <span id="total-questions">5</span></div>
-                            <button onclick="window.showCollection()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md text-sm sm:text-base">My Collection</button>
+                            <button id="show-collection-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md text-sm sm:text-base">My Collection</button>
                         </div>
                     </header>
                     <main>
@@ -235,18 +233,23 @@
                 <div id="level-complete-screen" class="hidden text-center py-8">
                      <h2 class="text-3xl sm:text-4xl font-bold text-green-400 mb-4">Level Complete!</h2>
                     <p class="text-lg sm:text-xl text-gray-300 mb-6">You answered all questions correctly!</p>
-                    <button onclick="window.claimReward()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg sm:text-xl">Claim Your Hero Dossier</button>
+                    <button id="claim-reward-btn" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg sm:text-xl">Claim Your Hero Dossier</button>
                 </div>
                 <div id="level-failed-screen" class="hidden text-center py-8">
                      <h2 class="text-3xl sm:text-4xl font-bold text-red-500 mb-4">Level Failed</h2>
                     <p class="text-lg sm:text-xl text-gray-300 mb-6">You must answer all questions correctly. Try again!</p>
-                    <button onclick="window.loadLevel()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl">Try Again</button>
+                    <button id="retry-level-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl">Try Again</button>
                 </div>`;
-            document.getElementById('game-container').classList.remove('hidden');
+            
+            document.getElementById('show-collection-btn').addEventListener('click', showCollection);
+            document.getElementById('claim-reward-btn').addEventListener('click', claimReward);
+            document.getElementById('retry-level-btn').addEventListener('click', loadLevel);
+            
+            gameContainer.classList.remove('hidden');
         }
 
         // --- GAME FLOW ---
-        window.loadLevel = () => {
+        function loadLevel() {
             renderQuizUI();
             score = 0;
             const levelData = gameData[userProgress.currentLevelIndex];
@@ -271,6 +274,7 @@
                 const button = document.createElement('button');
                 button.textContent = option;
                 button.className = 'option-btn text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg';
+                button.addEventListener('click', () => selectAnswer(button, option, questionData.answer, qIndex));
                 optionsContainer.appendChild(button);
             });
         }
@@ -299,7 +303,8 @@
         }
         
         function showGameComplete() {
-            document.getElementById('game-container').innerHTML = `
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.innerHTML = `
                 <div class="text-center py-12">
                     <h2 class="text-3xl sm:text-4xl font-bold text-green-400 mb-4">Congratulations, History Hero!</h2>
                     <p class="text-lg sm:text-xl text-gray-300 mb-6">You have collected all available dossiers!</p>
@@ -308,9 +313,10 @@
                         <p class="text-xl sm:text-2xl font-bold text-yellow-300 mt-2">+91 7902756966</p>
                         <p class="text-sm sm:text-md text-green-300 mt-3">The lucky winner gets a ₹1000 cash prize!</p>
                     </div>
-                    <button onclick="window.showCollection()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg">View Your Final Collection</button>
+                    <button id="view-final-collection-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg">View Your Final Collection</button>
                 </div>`;
-            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('view-final-collection-btn').addEventListener('click', showCollection);
+            gameContainer.classList.remove('hidden');
             document.getElementById('collection-container').classList.add('hidden');
         }
         
@@ -331,16 +337,18 @@
             document.getElementById('dossier-modal').classList.remove('hidden');
         }
 
-        window.claimReward = () => {
+        function claimReward() {
             const cardData = gameData[userProgress.currentLevelIndex].rewardCard;
             renderDossierModal(cardData);
-            document.getElementById('modal-actions').innerHTML = `
-                <button onclick="window.addToCollection()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-lg sm:text-xl transition-transform transform hover:scale-105">
+            const modalActions = document.getElementById('modal-actions');
+            modalActions.innerHTML = `
+                <button id="add-to-collection-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-lg sm:text-xl transition-transform transform hover:scale-105">
                     Add to Collection
                 </button>`;
+            document.getElementById('add-to-collection-btn').addEventListener('click', addToCollection);
         }
 
-        window.addToCollection = async () => {
+        async function addToCollection() {
             const currentLevel = gameData[userProgress.currentLevelIndex];
             userProgress.collectedCards[currentLevel.rewardCard.id] = currentLevel.rewardCard;
             userProgress.currentLevelIndex++;
@@ -349,15 +357,16 @@
             loadLevel();
         }
 
-        window.showCollection = () => {
+        function showCollection() {
             document.getElementById('game-container').classList.add('hidden');
             const collectionContainer = document.getElementById('collection-container');
             collectionContainer.innerHTML = `
                 <header class="flex justify-between items-center mb-6 border-b-2 border-gray-600 pb-3">
                      <h1 class="text-2xl sm:text-3xl font-bold text-yellow-300" style="font-family: 'Roboto Slab', serif;">My History Heroes</h1>
-                     <button onclick="window.hideCollection()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm sm:text-base">Back to Game</button>
+                     <button id="hide-collection-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm sm:text-base">Back to Game</button>
                 </header>
                 <div id="collection-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>`;
+            document.getElementById('hide-collection-btn').addEventListener('click', hideCollection);
             collectionContainer.classList.remove('hidden');
             
             const grid = document.getElementById('collection-grid');
@@ -374,19 +383,24 @@
                     <p class="text-sm text-gray-400 italic">${card.era}</p>
                     <p class="text-gray-300 mt-2 text-sm line-clamp-2">"${card.quote}"</p>
                 `;
-                cardElement.onclick = () => {
+                cardElement.addEventListener('click', () => {
                     renderDossierModal(card);
-                    document.getElementById('modal-actions').innerHTML = `<button onclick="document.getElementById('dossier-modal').classList.add('hidden')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Close</button>`;
-                }
+                    const modalActions = document.getElementById('modal-actions');
+                    modalActions.innerHTML = `<button id="dossier-close-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Close</button>`;
+                    document.getElementById('dossier-close-btn').addEventListener('click', () => document.getElementById('dossier-modal').classList.add('hidden'));
+                });
                 grid.appendChild(cardElement);
             }
         }
         
-        window.hideCollection = () => {
+        function hideCollection() {
             document.getElementById('collection-container').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
             if(userProgress.currentLevelIndex >= gameData.length) {
                 showGameComplete();
+            } else {
+                // If the game is not complete, re-render the quiz UI
+                loadLevel();
             }
         }
         
