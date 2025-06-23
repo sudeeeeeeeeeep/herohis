@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History Heroes: Echoes of Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Montserrat:wght@400;600&family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background: #1a202c; }
+        .game-container, .collection-container { font-family: 'Montserrat', sans-serif; background: linear-gradient(135deg, #2d3748, #1a202c); border: 2px solid #a0aec0; }
+        .option-btn { transition: all 0.2s ease-in-out; background-color: #4a5568; border-bottom: 4px solid #2d3748; }
+        .option-btn:hover { background-color: #718096; transform: translateY(-2px); border-bottom-width: 6px; }
+        .option-btn:active { transform: translateY(1px); border-bottom-width: 2px; }
+        .correct { background-color: #38a169 !important; border-bottom-color: #2f855a !important; }
+        .incorrect { background-color: #e53e3e !important; border-bottom-color: #c53030 !important; }
+        
+        .modal-card {
+            font-family: 'Kalam', cursive; background: #fdf5e6;
+            border: 10px solid #8B4513;
+            border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='75' height='75' viewBox='0 0 20 20'%3E%3Cpath fill='%238B4513' d='M10 0 C4.47 0 0 4.47 0 10 C0 15.52 4.47 20 10 20 C15.52 20 20 15.52 20 10 C20 4.47 15.52 0 10 0 Z M10 18 C5.58 18 2 14.42 2 10 C2 5.58 5.58 2 10 2 C14.42 2 18 5.58 18 10 C18 14.42 14.42 18 10 18 Z'/%3E%3C/svg%3E") 20% round;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .card-inner { 
+            background: #2d3748 url('https://www.transparenttextures.com/patterns/subtle-grunge.png'); 
+            border: 2px dashed #a0522d; 
+            margin: 5px; 
+        }
+        .card-title { font-family: 'Roboto Slab', serif; text-shadow: 1px 1px #333; }
+        .collection-card { transition: all 0.3s ease; cursor: pointer; border: 2px solid #a0522d; }
+        .collection-card:hover { transform: scale(1.05); box-shadow: 0 10px 20px rgba(253, 230, 138, 0.3); }
+        .quote-text { font-family: 'Georgia', serif; }
+
+        .dossier-text { color: #f3f4f6; }
+        .dossier-heading { color: #ffffff; }
+        .dossier-subtle { color: #9ca3af; }
+    </style>
+</head>
+<body class="text-white min-h-screen flex items-center justify-center p-2 sm:p-4">
+
+    <!-- App Wrapper -->
+    <div id="app-wrapper" class="w-full">
+        <div id="loading-spinner" class="text-center">
+            <svg class="animate-spin h-10 w-10 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-2 text-lg">Loading History...</p>
+        </div>
+
+        <!-- Welcome Banner -->
+        <div id="welcome-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-50">
+            <div class="game-container rounded-2xl p-6 sm:p-8 text-center max-w-lg mx-auto transform transition-all scale-95 opacity-0" id="welcome-box">
+                <h1 class="text-3xl sm:text-4xl font-bold text-yellow-300 mb-4" style="font-family: 'Roboto Slab', serif;">Welcome to History Heroes!</h1>
+                <p class="text-base sm:text-lg text-gray-300 mb-6">Answer historical questions to unlock awesome collectible cards of famous figures. You must answer all questions in a level correctly to earn your reward.</p>
+                <div class="bg-blue-900/50 border border-blue-400 rounded-lg p-4 mb-8">
+                    <p class="text-base sm:text-lg text-white">Collect all 10 cards, take a screenshot of your collection, and send it to us on WhatsApp!</p>
+                    <p class="text-xl sm:text-2xl font-bold text-yellow-300 mt-2">+91 7902756966</p>
+                    <p class="text-sm sm:text-md text-green-300 mt-3">The lucky winner gets a ₹1000 cash prize!</p>
+                    <p class="text-sm sm:text-md text-red-300 mt-3">NB:If you close your game in between your progress will be lost and should play again to complete the game!!</p>
+                </div>
+                <button id="start-game-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl shadow-lg transition-transform transform hover:scale-105">Start Your Journey</button>
+            </div>
+        </div>
+
+        <div id="game-container" class="hidden game-container rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-2xl mx-auto"></div>
+        <div id="collection-container" class="hidden collection-container rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-4xl mx-auto"></div>
+    </div>
+
+    <!-- Dossier Card Modal -->
+    <div id="dossier-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center p-4 z-50">
+        <div id="dossier-card" class="modal-card w-full max-w-md rounded-2xl p-1 mb-4 overflow-y-auto" style="max-height: 80vh;">
+            <div class="card-inner p-4 sm:p-6">
+                <h3 id="card-name" class="card-title dossier-heading text-3xl sm:text-4xl font-bold mb-2 text-center"></h3>
+                <p id="card-era" class="dossier-text font-semibold text-sm mb-4 text-center"></p>
+                
+                <div class="bg-black/20 rounded-lg p-3 sm:p-4 mb-4">
+                    <i class="fa-solid fa-quote-left text-xl sm:text-2xl dossier-subtle"></i>
+                    <p id="card-quote" class="quote-text dossier-text text-base sm:text-lg italic my-2"></p>
+                </div>
+
+                <div class="bg-black/20 rounded-lg p-3 sm:p-4 mb-4">
+                    <h4 class="dossier-heading font-bold text-lg mb-2 border-b-2 border-stone-400/50 pb-1">Key Facts</h4>
+                    <ul id="card-facts" class="list-none space-y-2 dossier-text text-sm sm:text-base"></ul>
+                </div>
+
+                <div class="bg-amber-800/20 rounded-lg p-3 sm:p-4">
+                    <h4 class="dossier-heading font-bold text-lg mb-2">Historical Impact</h4>
+                    <p id="card-impact" class="dossier-text text-sm sm:text-base"></p>
+                </div>
+            </div>
+        </div>
+        <div id="modal-actions">
+            <!-- Buttons will be injected here -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- GAME DATA (EXPANDED TO 10 LEVELS) ---
+        const gameData = [
+            {
+                level: 1, id: "level_1", title: "Ancient Empires",
+                rewardCard: { id: "rajendra_chola_1", name: "Rajendra Chola I", era: "Chola Dynasty (c. 1014-1044 CE)", quote: "The ocean is but a puddle for my victorious fleet.", keyFacts: ["Expanded the Chola Empire to its greatest extent.", "Led a major naval expedition against the Srivijaya empire in Southeast Asia.", "Established a vast trading network across the Indian Ocean."], impact: "Solidified the Chola dynasty as the dominant maritime power of its time, influencing trade and culture across a vast region." },
+                questions: [ { q: "Which empire was ruled by Augustus Caesar?", options: ["Roman Empire", "Persian Empire", "Greek Empire", "Maurya Empire"], answer: "Roman Empire" }, { q: "The Great Wall of China was primarily built during which dynasty?", options: ["Han Dynasty", "Tang Dynasty", "Ming Dynasty", "Qin Dynasty"], answer: "Qin Dynasty" }, { q: "Who was a famous philosopher in Ancient Greece and the teacher of Plato?", options: ["Aristotle", "Socrates", "Homer", "Pericles"], answer: "Socrates" }, { q: "The ancient city of Babylon was the capital of which empire?", options: ["Assyrian", "Akkadian", "Babylonian", "Egyptian"], answer: "Babylonian" }, { q: "Rajendra Chola I was a powerful ruler of which South Indian dynasty?", options: ["Pandya", "Chera", "Chola", "Pallava"], answer: "Chola" }]
+            },
+            {
+                level: 2, id: "level_2", title: "Revolution & Industry",
+                rewardCard: { id: "joseph_stalin", name: "Joseph Stalin", era: "Soviet Union (1924-1953)", quote: "A single death is a tragedy; a million deaths is a statistic.", keyFacts: ["Implemented the 'Five-Year Plans' for rapid industrialization.", "Led the Soviet Union to victory on the Eastern Front of WWII.", "Instigated the 'Great Purge', resulting in widespread political repression."], impact: "Transformed the USSR from a peasant society into a global superpower, but at an immense cost of human life and freedom." },
+                questions: [ { q: "Who is credited with inventing the telephone?", options: ["Thomas Edison", "Nikola Tesla", "Alexander Graham Bell", "Guglielmo Marconi"], answer: "Alexander Graham Bell" }, { q: "The storming of the Bastille is a key event in which revolution?", options: ["American Revolution", "Russian Revolution", "French Revolution", "Industrial Revolution"], answer: "French Revolution" }, { q: "Who was the leader of the Bolshevik party during the 1917 Russian Revolution?", options: ["Joseph Stalin", "Leon Trotsky", "Vladimir Lenin", "Mikhail Gorbachev"], answer: "Vladimir Lenin" }, { q: "The 'Reign of Terror' was a period during which revolution?", options: ["Chinese Revolution", "French Revolution", "Cuban Revolution", "American Revolution"], answer: "French Revolution" }, { q: "Joseph Stalin was the dictator of which country?", options: ["Germany", "Italy", "Soviet Union", "Japan"], answer: "Soviet Union" }]
+            },
+            {
+                level: 3, id: "level_3", title: "The Renaissance",
+                rewardCard: { id: "leonardo_da_vinci", name: "Leonardo da Vinci", era: "Italian Renaissance (1452-1519)", quote: "Simplicity is the ultimate sophistication.", keyFacts: ["Painted the Mona Lisa and The Last Supper.", "Designed conceptual flying machines and other inventions.", "Studied human anatomy in unprecedented detail."], impact: "Epitomized the Renaissance ideal of a 'polymath,' merging art and science in a way that profoundly influenced Western thought." },
+                questions: [ { q: "Who painted the ceiling of the Sistine Chapel?", options: ["Donatello", "Raphael", "Michelangelo", "Titian"], answer: "Michelangelo" }, { q: "Who is credited with starting the Protestant Reformation by posting his Ninety-five Theses?", options: ["John Calvin", "Martin Luther", "Henry VIII", "Jan Hus"], answer: "Martin Luther" }, { q: "The invention of the printing press by whom revolutionized communication in Europe?", options: ["Galileo Galilei", "William Caxton", "Johannes Gutenberg", "Bi Sheng"], answer: "Johannes Gutenberg" }, { q: "Which astronomer proposed a heliocentric model of the universe, challenging the Church's view?", options: ["Ptolemy", "Tycho Brahe", "Nicolaus Copernicus", "Giordano Bruno"], answer: "Nicolaus Copernicus" }, { q: "Which powerful family were famous patrons of the arts in Florence during the Renaissance?", options: ["The Borgia Family", "The Sforza Family", "The Medici Family", "The Pazzi Family"], answer: "The Medici Family" }]
+            },
+            {
+                level: 4, id: "level_4", title: "Age of Exploration",
+                rewardCard: { id: "christopher_columbus", name: "Christopher Columbus", era: "Maritime Exploration (1451-1506)", quote: "Following the light of the sun, we left the Old World.", keyFacts: ["Made four voyages across the Atlantic Ocean, sponsored by Spain.", "Landed in the Americas in 1492, believing he had reached Asia.", "His voyages initiated the Columbian Exchange."], impact: "His voyages began permanent European contact with the Americas, leading to widespread exchange but also initiating centuries of colonization." },
+                questions: [ { q: "Who was the first European to reach India by sea, sailing around the southern tip of Africa?", options: ["Ferdinand Magellan", "Vasco da Gama", "Marco Polo", "James Cook"], answer: "Vasco da Gama" }, { q: "What term describes the transfer of plants, animals, culture, and diseases between the Old and New Worlds?", options: ["The Silk Road", "The Triangular Trade", "The Columbian Exchange", "The Spice Route"], answer: "The Columbian Exchange" }, { q: "Which navigational instrument helped sailors determine their latitude from the position of the stars?", options: ["Compass", "Sextant", "Chronometer", "Astrolabe"], answer: "Astrolabe" }, { q: "The 1494 Treaty of Tordesillas divided newly discovered lands between which two countries?", options: ["England and France", "Portugal and Spain", "Netherlands and England", "France and Spain"], answer: "Portugal and Spain" }, { q: "Whose expedition completed the first circumnavigation of the Earth?", options: ["Christopher Columbus", "Francis Drake", "Ferdinand Magellan", "Amerigo Vespucci"], answer: "Ferdinand Magellan" }]
+            },
+            {
+                level: 5, id: "level_5", title: "Enlightenment Thinkers",
+                rewardCard: { id: "voltaire", name: "Voltaire", era: "Age of Enlightenment (1694-1778)", quote: "I disapprove of what you say, but I will defend to the death your right to say it.", keyFacts: ["A leading French writer and philosopher.", "Championed freedom of speech, religion, and separation of church and state.", "Criticized the Catholic Church and the French monarchy through satire."], impact: "His passionate advocacy for civil liberties and reason greatly influenced leaders of both the American and French Revolutions." },
+                questions: [ { q: "Which English philosopher argued for the natural rights of 'life, liberty, and property'?", options: ["Thomas Hobbes", "John Locke", "Francis Bacon", "David Hume"], answer: "John Locke" }, { q: "Jean-Jacques Rousseau's concept of an agreement among people to create a government is called what?", options: ["The Divine Right", "The Social Contract", "The Leviathan", "The Republic"], answer: "The Social Contract" }, { q: "Who proposed the separation of government powers into legislative, executive, and judicial branches?", options: ["Voltaire", "Diderot", "Montesquieu", "Rousseau"], answer: "Montesquieu" }, { q: "The Age of Enlightenment is also known as the Age of...?", options: ["Reason", "Discovery", "Empires", "Faith"], answer: "Reason" }, { q: "Benjamin Franklin and Thomas Jefferson were heavily influenced by which European intellectual movement?", options: ["The Reformation", "The Renaissance", "The Enlightenment", "The Romantic Era"], answer: "The Enlightenment" }]
+            },
+            {
+                level: 6, id: "level_6", title: "Napoleonic Era",
+                rewardCard: { id: "napoleon_bonaparte", name: "Napoleon Bonaparte", era: "French Empire (1769-1821)", quote: "Impossible is a word to be found only in the dictionary of fools.", keyFacts: ["Rose from military general to Emperor of the French.", "Instituted the Napoleonic Code, a major legal reform.", "Vastly expanded his empire across Europe through military conquest."], impact: "His wars and reforms redrew the map of Europe, spread revolutionary ideals, and laid the foundations for modern European states." },
+                questions: [ { q: "Napoleon's final defeat occurred at which 1815 battle?", options: ["Battle of Austerlitz", "Battle of Trafalgar", "Battle of Waterloo", "Battle of Borodino"], answer: "Battle of Waterloo" }, { q: "What comprehensive set of civil laws, introduced by Napoleon, is one of his greatest achievements?", options: ["The Declaration of Rights", "The Napoleonic Code", "The Magna Carta", "The Edict of Nantes"], answer: "The Napoleonic Code" }, { q: "During Napoleon's campaign in Egypt, his soldiers discovered which key to deciphering hieroglyphics?", options: ["The Dead Sea Scrolls", "The Rosetta Stone", "The Code of Hammurabi", "The Cyrus Cylinder"], answer: "The Rosetta Stone" }, { q: "In 1803, Napoleon sold a vast territory to the United States in a deal known as the...?", options: ["Gadsden Purchase", "Alaska Purchase", "Louisiana Purchase", "Florida Purchase"], answer: "Louisiana Purchase" }, { q: "Napoleon's disastrous 1812 invasion of which country marked a turning point in his fortunes?", options: ["Prussia", "Spain", "Austria", "Russia"], answer: "Russia" }]
+            },
+            {
+                level: 7, id: "level_7", title: "The World Wars",
+                rewardCard: { id: "winston_churchill", name: "Winston Churchill", era: "World War II (1874-1965)", quote: "We shall never surrender.", keyFacts: ["British Prime Minister during most of World War II.", "Famous for his defiant speeches that rallied the British people.", "Awarded the Nobel Prize in Literature in 1953."], impact: "His resolute leadership was crucial in guiding Britain and the Allies through the darkest days of WWII to eventual victory." },
+                questions: [ { q: "The assassination of which Archduke triggered the start of World War I?", options: ["Franz Joseph", "Wilhelm II", "Nicholas II", "Franz Ferdinand"], answer: "Franz Ferdinand" }, { q: "What treaty, signed in 1919, officially ended WWI but is often cited as a cause of WWII?", options: ["Treaty of Paris", "Treaty of Versailles", "Treaty of Brest-Litovsk", "Treaty of London"], answer: "Treaty of Versailles" }, { q: "The Allied invasion of Normandy on June 6, 1944, is commonly known as?", options: ["D-Day", "V-E Day", "The Battle of the Bulge", "Operation Barbarossa"], answer: "D-Day" }, { q: "The surprise attack by Japan on the US naval base at Pearl Harbor occurred in what year?", options: ["1939", "1940", "1941", "1942"], answer: "1941" }, { q: "What name is given to the genocide of approximately six million European Jews by Nazi Germany?", options: ["The Great Purge", "The Holocaust", "The Armenian Genocide", "The Final Solution"], answer: "The Holocaust" }]
+            },
+            {
+                level: 8, id: "level_8", title: "Cold War Confrontations",
+                rewardCard: { id: "john_f_kennedy", name: "John F. Kennedy", era: "Cold War (1917-1963)", quote: "Ask not what your country can do for you—ask what you can do for your country.", keyFacts: ["35th President of the United States.", "Navigated the Cuban Missile Crisis, averting nuclear war.", "Launched the Apollo program to land a man on the Moon."], impact: "His presidency represented a period of optimism and challenge during the height of the Cold War, though it was cut short by his assassination." },
+                questions: [ { q: "What physical barrier, built in 1961, symbolized the 'Iron Curtain' divide between East and West?", options: ["The Great Wall of China", "The Berlin Wall", "Hadrian's Wall", "The Maginot Line"], answer: "The Berlin Wall" }, { q: "A tense 1962 standoff between the US and the Soviet Union over missile sites in Cuba is known as the...?", options: ["Bay of Pigs Invasion", "Berlin Airlift", "Cuban Missile Crisis", "Suez Crisis"], answer: "Cuban Missile Crisis" }, { q: "The competition between the US and the USSR for supremacy in space exploration was called the...?", options: ["The Space Race", "Star Wars", "Project Apollo", "The Mercury Program"], answer: "The Space Race" }, { q: "What military alliance was formed by Western countries in 1949 to counter Soviet power?", options: ["United Nations", "SEATO", "NATO", "CENTO"], answer: "NATO" }, { q: "The Soviet Union and its Eastern Bloc allies formed a rival military alliance in 1955 called the...?", options: ["Comintern", "Comecon", "Warsaw Pact", "Axis Powers"], answer: "Warsaw Pact" }]
+            },
+            {
+                level: 9, id: "level_9", title: "Civil Rights & Decolonization",
+                rewardCard: { id: "nelson_mandela", name: "Nelson Mandela", era: "Anti-Apartheid (1918-2013)", quote: "It always seems impossible until it's done.", keyFacts: ["South African anti-apartheid revolutionary.", "Served 27 years in prison for opposing the apartheid regime.", "Became South Africa's first black president in 1994."], impact: "He became a global symbol of resistance and reconciliation, leading his country out of apartheid and into a multi-racial democracy." },
+                questions: [ { q: "Who led India's independence movement against British rule through nonviolent civil disobedience?", options: ["Jawaharlal Nehru", "Subhas Chandra Bose", "Mahatma Gandhi", "Sardar Patel"], answer: "Mahatma Gandhi" }, { q: "Who delivered the famous 'I Have a Dream' speech during the 1963 March on Washington?", options: ["Malcolm X", "Martin Luther King Jr.", "Jesse Jackson", "John Lewis"], answer: "Martin Luther King Jr." }, { q: "The policy of racial segregation in South Africa was known as...?", options: ["Segregation", "Jim Crow", "Apartheid", "Internment"], answer: "Apartheid" }, { q: "The 1947 division of British India into two independent dominions, India and Pakistan, is known as the...?", options: ["The Great Divide", "The Separation", "The Partition of India", "The Radcliffe Line"], answer: "The Partition of India" }, { q: "Whose refusal to give up her bus seat sparked the Montgomery bus boycott?", options: ["Harriet Tubman", "Sojourner Truth", "Ida B. Wells", "Rosa Parks"], answer: "Rosa Parks" }]
+            },
+            {
+                level: 10, id: "level_10", title: "The Information Age",
+                rewardCard: { id: "tim_berners_lee", name: "Tim Berners-Lee", era: "Modern Technology (b. 1955)", quote: "This is for everyone.", keyFacts: ["A British computer scientist.", "Invented the World Wide Web in 1989 while at CERN.", "Developed the first web browser, web server, and HTML."], impact: "His invention fundamentally changed how humanity accesses information, communicates, and connects, making him the father of the modern internet." },
+                questions: [ { q: "The graphical user interface (GUI) and the computer mouse were popularized by which company?", options: ["IBM", "Microsoft", "Apple", "Xerox"], answer: "Apple" }, { q: "What was the name of the US research project that created the foundations of the Internet?", options: ["ENIAC", "Sputnik", "Manhattan Project", "ARPANET"], answer: "ARPANET" }, { q: "Which co-founder of Microsoft played a key role in the personal computer revolution?", options: ["Steve Jobs", "Bill Gates", "Larry Ellison", "Michael Dell"], answer: "Bill Gates" }, { q: "The project that successfully mapped the entire human genetic material was known as the...?", options: ["Apollo Program", "Human Genome Project", "Crispr Project", "CERN Project"], answer: "Human Genome Project" }, { q: "What law observes that the number of transistors on a microchip doubles about every two years?", options: ["Metcalfe's Law", "Murphy's Law", "Moore's Law", "Amdahl's Law"], answer: "Moore's Law" }]
+            }
+        ];
+        
+        // --- STATE & DB ---
+        let db, auth, userId, score;
+        let userProgress = { currentLevelIndex: 0, collectedCards: {} };
+        const docRef = () => doc(db, `users/${userId}/progress`);
+
+        // --- CORE FUNCTIONS ---
+        async function initializeFirebase() {
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCdXoewTV96kw3SX12W7ZpLgXbZDOqhFko",
+                    authDomain: "kidsgame-a3fc0.firebaseapp.com",
+                    projectId: "kidsgame-a3fc0",
+                    storageBucket: "kidsgame-a3fc0.appspot.com",
+                };
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                userId = auth.currentUser.uid;
+                await loadUserData();
+            } catch (error) {
+                console.error("Firebase Init Error:", error);
+                userId = `guest_${crypto.randomUUID()}`;
+            } finally {
+                document.getElementById('loading-spinner').classList.add('hidden');
+                const welcomeModal = document.getElementById('welcome-modal');
+                const welcomeBox = document.getElementById('welcome-box');
+                welcomeModal.classList.remove('hidden');
+                // Animate the welcome box for a nice effect
+                setTimeout(() => {
+                    welcomeBox.classList.remove('scale-95', 'opacity-0');
+                }, 100);
+            }
+        }
+        
+        async function loadUserData() {
+            if (!userId) return;
+            try {
+                 const docSnap = await getDoc(docRef());
+                 if (docSnap.exists()) {
+                    userProgress = docSnap.data();
+                 } else {
+                    await setDoc(docRef(), userProgress);
+                 }
+            } catch (e) {
+                console.error("Error loading user data:", e);
+            }
+        }
+
+        async function saveUserData() {
+             if (!userId) return;
+             try {
+                await setDoc(docRef(), userProgress);
+             } catch(e) {
+                console.error("Error saving user data:", e);
+             }
+        }
+
+        // --- UI RENDERING ---
+        function renderQuizUI() {
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.innerHTML = `
+                <div id="quiz-screen">
+                    <header class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b-2 border-gray-600 pb-3 gap-4">
+                        <h1 id="level-title" class="text-xl sm:text-2xl font-bold text-yellow-300 text-center" style="font-family: 'Roboto Slab', serif;"></h1>
+                        <div class="flex items-center gap-4">
+                            <div class="text-lg font-semibold text-gray-300 text-nowrap">Q: <span id="question-counter">1</span> / <span id="total-questions">5</span></div>
+                            <button onclick="window.showCollection()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md text-sm sm:text-base">My Collection</button>
+                        </div>
+                    </header>
+                    <main>
+                        <div id="question-container" class="bg-gray-800/50 p-4 sm:p-6 rounded-lg mb-6 min-h-[120px] flex items-center justify-center">
+                            <p id="question-text" class="text-base sm:text-xl text-center text-gray-200">Loading question...</p>
+                        </div>
+                        <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"></div>
+                    </main>
+                </div>
+                <div id="level-complete-screen" class="hidden text-center py-8">
+                     <h2 class="text-3xl sm:text-4xl font-bold text-green-400 mb-4">Level Complete!</h2>
+                    <p class="text-lg sm:text-xl text-gray-300 mb-6">You answered all questions correctly!</p>
+                    <button onclick="window.claimReward()" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg sm:text-xl">Claim Your Hero Dossier</button>
+                </div>
+                <div id="level-failed-screen" class="hidden text-center py-8">
+                     <h2 class="text-3xl sm:text-4xl font-bold text-red-500 mb-4">Level Failed</h2>
+                    <p class="text-lg sm:text-xl text-gray-300 mb-6">You must answer all questions correctly. Try again!</p>
+                    <button onclick="window.loadLevel()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg sm:text-xl">Try Again</button>
+                </div>`;
+            document.getElementById('game-container').classList.remove('hidden');
+        }
+
+        // --- GAME FLOW ---
+        window.loadLevel = () => {
+            renderQuizUI();
+            score = 0;
+            const levelData = gameData[userProgress.currentLevelIndex];
+            if (!levelData) {
+                showGameComplete();
+                return;
+            }
+            document.getElementById('level-title').textContent = `Level ${levelData.level}: ${levelData.title}`;
+            document.getElementById('total-questions').textContent = levelData.questions.length;
+            loadQuestion(0);
+        }
+
+        function loadQuestion(qIndex) {
+            const levelData = gameData[userProgress.currentLevelIndex];
+            const questionData = levelData.questions[qIndex];
+            document.getElementById('question-counter').textContent = qIndex + 1;
+            document.getElementById('question-text').textContent = questionData.q;
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            const shuffledOptions = [...questionData.options].sort(() => Math.random() - 0.5);
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'option-btn text-white font-semibold py-3 px-4 rounded-lg text-base sm:text-lg';
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(button, selectedOption, correctAnswer, qIndex) {
+            Array.from(document.getElementById('options-container').children).forEach(btn => btn.disabled = true);
+            if (selectedOption === correctAnswer) {
+                button.classList.add('correct');
+                score++;
+            } else {
+                button.classList.add('incorrect');
+            }
+            setTimeout(() => {
+                const nextQuestionIndex = qIndex + 1;
+                if (nextQuestionIndex < gameData[userProgress.currentLevelIndex].questions.length) {
+                    loadQuestion(nextQuestionIndex);
+                } else {
+                    document.getElementById('quiz-screen').classList.add('hidden');
+                    if (score === gameData[userProgress.currentLevelIndex].questions.length) {
+                         document.getElementById('level-complete-screen').classList.remove('hidden');
+                    } else {
+                         document.getElementById('level-failed-screen').classList.remove('hidden');
+                    }
+                }
+            }, 1500);
+        }
+        
+        function showGameComplete() {
+            document.getElementById('game-container').innerHTML = `
+                <div class="text-center py-12">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-green-400 mb-4">Congratulations, History Hero!</h2>
+                    <p class="text-lg sm:text-xl text-gray-300 mb-6">You have collected all available dossiers!</p>
+                    <div class="bg-blue-900/50 border border-blue-400 rounded-lg p-4 mb-6">
+                        <p class="text-base sm:text-lg text-white">Take a screenshot of your full collection and send it to us on WhatsApp!</p>
+                        <p class="text-xl sm:text-2xl font-bold text-yellow-300 mt-2">+91 7902756966</p>
+                        <p class="text-sm sm:text-md text-green-300 mt-3">The lucky winner gets a ₹1000 cash prize!</p>
+                    </div>
+                    <button onclick="window.showCollection()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg">View Your Final Collection</button>
+                </div>`;
+            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('collection-container').classList.add('hidden');
+        }
+        
+        // --- MODAL & COLLECTION ---
+        function renderDossierModal(cardData) {
+            document.getElementById('card-name').textContent = cardData.name;
+            document.getElementById('card-era').textContent = cardData.era;
+            document.getElementById('card-quote').textContent = cardData.quote;
+            document.getElementById('card-impact').textContent = cardData.impact;
+            const factsList = document.getElementById('card-facts');
+            factsList.innerHTML = '';
+            cardData.keyFacts.forEach(fact => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2";
+                li.innerHTML = `<i class="fa-solid fa-star text-xs dossier-subtle mt-1"></i><span>${fact}</span>`;
+                factsList.appendChild(li);
+            });
+            document.getElementById('dossier-modal').classList.remove('hidden');
+        }
+
+        window.claimReward = () => {
+            const cardData = gameData[userProgress.currentLevelIndex].rewardCard;
+            renderDossierModal(cardData);
+            document.getElementById('modal-actions').innerHTML = `
+                <button onclick="window.addToCollection()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-lg sm:text-xl transition-transform transform hover:scale-105">
+                    Add to Collection
+                </button>`;
+        }
+
+        window.addToCollection = async () => {
+            const currentLevel = gameData[userProgress.currentLevelIndex];
+            userProgress.collectedCards[currentLevel.rewardCard.id] = currentLevel.rewardCard;
+            userProgress.currentLevelIndex++;
+            await saveUserData();
+            document.getElementById('dossier-modal').classList.add('hidden');
+            loadLevel();
+        }
+
+        window.showCollection = () => {
+            document.getElementById('game-container').classList.add('hidden');
+            const collectionContainer = document.getElementById('collection-container');
+            collectionContainer.innerHTML = `
+                <header class="flex justify-between items-center mb-6 border-b-2 border-gray-600 pb-3">
+                     <h1 class="text-2xl sm:text-3xl font-bold text-yellow-300" style="font-family: 'Roboto Slab', serif;">My History Heroes</h1>
+                     <button onclick="window.hideCollection()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm sm:text-base">Back to Game</button>
+                </header>
+                <div id="collection-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>`;
+            collectionContainer.classList.remove('hidden');
+            
+            const grid = document.getElementById('collection-grid');
+            if(Object.keys(userProgress.collectedCards).length === 0){
+                grid.innerHTML = `<p class="text-gray-400 col-span-full text-center">You haven't collected any heroes yet.</p>`;
+                return;
+            }
+            for (const cardId in userProgress.collectedCards) {
+                const card = userProgress.collectedCards[cardId];
+                const cardElement = document.createElement('div');
+                cardElement.className = 'collection-card bg-amber-100/10 rounded-lg p-4 text-left';
+                cardElement.innerHTML = `
+                    <h4 class="font-bold text-lg text-yellow-300">${card.name}</h4>
+                    <p class="text-sm text-gray-400 italic">${card.era}</p>
+                    <p class="text-gray-300 mt-2 text-sm line-clamp-2">"${card.quote}"</p>
+                `;
+                cardElement.onclick = () => {
+                    renderDossierModal(card);
+                    document.getElementById('modal-actions').innerHTML = `<button onclick="document.getElementById('dossier-modal').classList.add('hidden')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg">Close</button>`;
+                }
+                grid.appendChild(cardElement);
+            }
+        }
+        
+        window.hideCollection = () => {
+            document.getElementById('collection-container').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            if(userProgress.currentLevelIndex >= gameData.length) {
+                showGameComplete();
+            }
+        }
+        
+        // --- INITIALIZATION ---
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            document.getElementById('welcome-modal').classList.add('hidden');
+            loadLevel();
+        });
+
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>
